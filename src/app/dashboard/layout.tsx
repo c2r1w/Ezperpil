@@ -2,7 +2,6 @@
 'use client';
 
 import { auth, db } from '@/lib/firebase';
-import { XlocalStorage } from '@/lib/Xlocalstorage';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import {
@@ -103,40 +102,43 @@ export default function DashboardLayout({
     return () => unsubscribe();
   }, [router]);
 
-  // Load service settings from XlocalStorage
+  // Load service settings from localStorage
   React.useEffect(() => {
     if (!userData) return;
     setServicesLoading(true);
-    (async () => {
-      try {
-        const storedAffiliate = await XlocalStorage.getItem('paymentPlanAffiliateServices');
+    try {
+        const storedAffiliate = localStorage.getItem('paymentPlanAffiliateServices');
         if (storedAffiliate) setAffiliateServices(JSON.parse(storedAffiliate));
-        const storedClient = await XlocalStorage.getItem('paymentPlanClientServices');
+        
+        const storedClient = localStorage.getItem('paymentPlanClientServices');
         if (storedClient) setClientServices(JSON.parse(storedClient));
-      } catch (error) {
-        console.error("Could not load service settings from XlocalStorage", error);
-      } finally {
+    } catch (error) {
+        console.error("Could not load service settings from localStorage", error);
+    } finally {
         setServicesLoading(false);
-      }
-    })();
+    }
   }, [userData]);
   
-  const checkUnread = React.useCallback(async () => {
+  const checkUnread = React.useCallback(() => {
     if (user) {
-      const unreadKey = `unreadMessages_${user.uid}`;
-      const unreadRaw = await XlocalStorage.getItem(unreadKey);
-      const unreadData = JSON.parse(unreadRaw || '{}');
-      setHasUnread(Object.keys(unreadData).length > 0);
+        const unreadKey = `unreadMessages_${user.uid}`;
+        const unreadData = JSON.parse(localStorage.getItem(unreadKey) || '{}');
+        setHasUnread(Object.keys(unreadData).length > 0);
     }
   }, [user]);
 
   React.useEffect(() => {
-    if (!user) return;
-    checkUnread();
+      if (!user) return;
+      checkUnread();
+      
+      const handleStorageChange = () => {
+          checkUnread();
+      };
 
-    // Note: XlocalStorage is async and does not trigger 'storage' events across tabs.
-    // If you want cross-tab sync, you need to implement a polling or websocket solution.
-    // For now, we just check on mount/user change.
+      window.addEventListener('storage', handleStorageChange);
+      return () => {
+          window.removeEventListener('storage', handleStorageChange);
+      };
   }, [user, checkUnread]);
 
   const handleSignOut = async () => {
