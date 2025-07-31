@@ -1,0 +1,21 @@
+# Specifies the version of the App Hosting platform
+version: 1
+
+# Specifies the build and server settings for the app
+run:
+  # Specifies the command to start the server
+  command: npm run start
+  # Specifies the version of Node.js to use
+  runtime: node20
+
+# Specifies the resources to allocate to the app
+resources:
+  # Specifies the amount of memory to allocate
+  memoryMiB: 1024
+  # Specifies the amount of CPU to allocate
+  cpu: 1
+
+# Specifies the environment variables to set for the app
+env:
+  - variable: NODE_ENV
+    value: production
